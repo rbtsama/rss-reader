@@ -26,5 +26,10 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Environment
+.env
+.env.local
+.vercel
+
 # System
 .DS_Store 

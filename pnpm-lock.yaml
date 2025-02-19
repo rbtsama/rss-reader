@@ -11,6 +11,9 @@ importers:
       '@vicons/ionicons5':
         specifier: ^0.13.0
         version: 0.13.0
+      '@vicons/utils':
+        specifier: ^0.1.4
+        version: 0.1.4(vue@3.5.13(typescript@5.7.3))
       '@vueuse/core':
         specifier: ^10.7.0
         version: 10.11.1(vue@3.5.13(typescript@5.7.3))
@@ -32,13 +35,13 @@ importers:
     devDependencies:
       '@vitejs/plugin-vue':
         specifier: ^4.5.0
-        version: 4.6.2(vite@4.5.9)(vue@3.5.13(typescript@5.7.3))
+        version: 4.6.2(vite@4.5.9(@types/node@14.14.45))(vue@3.5.13(typescript@5.7.3))
       typescript:
         specifier: ^5.2.2
         version: 5.7.3
       vite:
         specifier: ^4.5.0
-        version: 4.5.9
+        version: 4.5.9(@types/node@14.14.45)
       vue-tsc:
         specifier: ^1.8.22
         version: 1.8.27(typescript@5.7.3)
@@ -222,11 +225,19 @@ packages:
   '@types/lodash@4.17.15':
     resolution: {integrity: sha512-w/P33JFeySuhN6JLkysYUK2gEmy9kHHFN7E8ro0tkfmlDOgxBDzWEZ/J8cWA+fHqFevpswDTFZnDx+R9lbL6xw==}
 
+  '@types/node@14.14.45':
+    resolution: {integrity: sha512-DssMqTV9UnnoxDWu959sDLZzfvqCF0qDNRjaWeYSui9xkFe61kKo4l1TWNTQONpuXEm+gLMRvdlzvNHBamzmEw==}
+
   '@types/web-bluetooth@0.0.20':
     resolution: {integrity: sha512-g9gZnnXVq7gM7v3tJCWV/qw7w+KeOlSHAhgF9RytFyifW6AF61hdT2ucrYhPq9hLs5JIryeupHV3qGk95dH9ow==}
 
   '@vicons/ionicons5@0.13.0':
     resolution: {integrity: sha512-zvZKBPjEXKN7AXNo2Na2uy+nvuv6SP4KAMQxpKL2vfHMj0fSvuw7JZcOPCjQC3e7ayssKnaoFVAhbYcW6v41qQ==}
+
+  '@vicons/utils@0.1.4':
+    resolution: {integrity: sha512-OHI19qVNN6i+uPQ+Y3f2s0dUxwsYnOCcKBW7XOU4yXXO1aU3ZoKpblCc3+4N0qmgoJs5rWKRAaMisipqEXJwAg==}
+    peerDependencies:
+      vue: ^3.0.6
 
   '@vitejs/plugin-vue@4.6.2':
     resolution: {integrity: sha512-kqf7SGFoG+80aZG6Pf+gsZIVvGSCKE98JbiWqcCV9cThtg91Jav0yvYFC9Zb+jKetNGF6ZKeoaxgZfND21fWKw==}
@@ -293,6 +304,9 @@ packages:
   '@vueuse/shared@10.11.1':
     resolution: {integrity: sha512-LHpC8711VFZlDaYUXEBbFBCQ7GS3dVU9mjOhhMhXP6txTV4EhYQg/KGnQuvt/sPAtoUKq7VVUnL6mVtFoL42sA==}
 
+  '@xicons/utils@0.1.4':
+    resolution: {integrity: sha512-uXxKDLz9abr80yJC05XSTq6wlyFcdW+N/1IYJkeHjzzXVc4VQ0sEYMoMMTjAH7HQBOyOkzOB4pf5NGF72lwa8Q==}
+
   async-validator@4.2.5:
     resolution: {integrity: sha512-7HhHjtERjqlNbZtqNqy2rckN/SpOOlmDliet+lP7k+eKZEjPk3DgyeU9lIXLdeLz0uBbbVp+9Qdow9wJWgwwfg==}
 
@@ -318,6 +332,9 @@ packages:
 
   computeds@0.0.1:
     resolution: {integrity: sha512-7CEBgcMjVmitjYo5q8JTJVra6X5mQ20uTThdK+0kR7UEaDrAWEQcRiBtWJzga4eRpP6afNwwLsX2SET2JhVB1Q==}
+
+  css-render@0.13.9:
+    resolution: {integrity: sha512-n3C4ZH59rveBrUlAD7n0Ze9/gUMKa4dlH1C9CWKpGcIHR/xRcIVXzBGy1iw8WWq2ySmn2/ZqOpySQNAK5Pb6sw==}
 
   css-render@0.15.14:
     resolution: {integrity: sha512-9nF4PdUle+5ta4W5SyZdLCCmFd37uVimSjg1evcTqKJCyvCEEj12WKzOSBNak6r4im4J4iYXKH1OWpUV5LBYFg==}
@@ -703,13 +720,20 @@ snapshots:
 
   '@types/lodash@4.17.15': {}
 
+  '@types/node@14.14.45': {}
+
   '@types/web-bluetooth@0.0.20': {}
 
   '@vicons/ionicons5@0.13.0': {}
 
-  '@vitejs/plugin-vue@4.6.2(vite@4.5.9)(vue@3.5.13(typescript@5.7.3))':
+  '@vicons/utils@0.1.4(vue@3.5.13(typescript@5.7.3))':
     dependencies:
-      vite: 4.5.9
+      '@xicons/utils': 0.1.4
+      vue: 3.5.13(typescript@5.7.3)
+
+  '@vitejs/plugin-vue@4.6.2(vite@4.5.9(@types/node@14.14.45))(vue@3.5.13(typescript@5.7.3))':
+    dependencies:
+      vite: 4.5.9(@types/node@14.14.45)
       vue: 3.5.13(typescript@5.7.3)
 
   '@volar/language-core@1.11.1':
@@ -814,6 +838,10 @@ snapshots:
       - '@vue/composition-api'
       - vue
 
+  '@xicons/utils@0.1.4':
+    dependencies:
+      css-render: 0.13.9
+
   async-validator@4.2.5: {}
 
   asynckit@0.4.0: {}
@@ -842,6 +870,12 @@ snapshots:
       delayed-stream: 1.0.0
 
   computeds@0.0.1: {}
+
+  css-render@0.13.9:
+    dependencies:
+      '@emotion/hash': 0.8.0
+      '@types/node': 14.14.45
+      csstype: 3.0.11
 
   css-render@0.15.14:
     dependencies:
@@ -1049,12 +1083,13 @@ snapshots:
       evtd: 0.2.4
       vue: 3.5.13(typescript@5.7.3)
 
-  vite@4.5.9:
+  vite@4.5.9(@types/node@14.14.45):
     dependencies:
       esbuild: 0.18.20
       postcss: 8.5.2
       rollup: 3.29.5
     optionalDependencies:
+      '@types/node': 14.14.45
       fsevents: 2.3.3
 
   vooks@0.2.12(vue@3.5.13(typescript@5.7.3)):
