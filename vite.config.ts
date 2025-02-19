@@ -9,5 +9,10 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'src')
     }
+  },
+  build: {
+    sourcemap: false,
+    minify: 'terser',
+    chunkSizeWarningLimit: 1500
   }
 }) 
