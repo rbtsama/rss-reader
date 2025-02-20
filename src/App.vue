@@ -1,31 +1,10 @@
 <template>
-  <n-config-provider>
-    <n-message-provider>
-      <n-layout>
-        <n-layout-content>
-          <router-view />
-        </n-layout-content>
-      </n-layout>
-    </n-message-provider>
-  </n-config-provider>
+  <div class="min-h-screen bg-gray-100">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <router-view />
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { 
-  NConfigProvider, 
-  NMessageProvider, 
-  NLayout, 
-  NLayoutContent 
-} from 'naive-ui'
-</script>
-
-<style>
-body {
-  margin: 0;
-  padding: 0;
-}
-
-#app {
-  min-height: 100vh;
-}
-</style> 
+</script> 

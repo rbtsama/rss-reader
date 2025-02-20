@@ -1,54 +1,73 @@
 <template>
-  <n-form
-    ref="formRef"
-    :model="formValue"
-    :rules="rules"
-    label-placement="left"
-    label-width="80"
-    require-mark-placement="right-hanging"
-  >
-    <n-form-item label="名称" path="name">
-      <n-input v-model:value="formValue.name" placeholder="请输入名称" />
-    </n-form-item>
+  <form @submit.prevent="handleSubmit" class="space-y-6">
+    <Toast ref="toastRef" />
     
-    <n-form-item label="类型" path="type">
-      <n-select
-        v-model:value="formValue.type"
-        :options="typeOptions"
-        placeholder="请选择类型"
+    <!-- 名称输入 -->
+    <div class="space-y-2">
+      <Label for="name">名称</Label>
+      <Input
+        id="name"
+        v-model="formValue.name"
+        type="text"
+        required
       />
-    </n-form-item>
-    
-    <n-form-item label="URL" path="url">
-      <n-input v-model:value="formValue.url" placeholder="请输入RSS地址" />
-    </n-form-item>
-    
-    <div class="flex justify-end gap-4 mt-6">
-      <n-button @click="handleCancel">取消</n-button>
-      <n-button type="primary" :loading="loading" @click="handleSubmit">
-        确认
-      </n-button>
     </div>
-  </n-form>
+
+    <!-- 类型选择 -->
+    <div class="space-y-2">
+      <Label for="type">类型</Label>
+      <Select
+        id="type"
+        v-model="formValue.type"
+        required
+      >
+        <option value="">请选择类型</option>
+        <option v-for="(label, value) in typeOptions" :key="value" :value="value">
+          {{ label }}
+        </option>
+      </Select>
+    </div>
+
+    <!-- URL 输入 -->
+    <div class="space-y-2">
+      <Label for="url">URL</Label>
+      <Input
+        id="url"
+        v-model="formValue.url"
+        type="url"
+        required
+        :disabled="loading"
+      />
+    </div>
+
+    <!-- 按钮组 -->
+    <div class="flex justify-end space-x-4">
+      <Button
+        type="button"
+        variant="ghost"
+        @click="handleCancel"
+      >
+        取消
+      </Button>
+      <Button
+        type="submit"
+        :disabled="loading"
+      >
+        {{ loading ? '验证中...' : '确定' }}
+      </Button>
+    </div>
+  </form>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, onMounted } from 'vue'
 import axios from 'axios'
-import { 
-  NForm, 
-  NFormItem, 
-  NInput, 
-  NSelect, 
-  NButton, 
-  FormInst, 
-  FormRules,
-  useMessage
-} from 'naive-ui'
 import type { RssSource } from '../types/rss'
+import { Button, Input, Label, Select } from '@/components/ui'
+import Toast from './Toast.vue'
 
 const props = defineProps<{
-  initialData?: RssSource
+  initialData?: RssSource | null
   isEdit?: boolean
 }>()
 
@@ -57,123 +76,138 @@ const emit = defineEmits<{
   (e: 'cancel'): void
 }>()
 
-const message = useMessage()
-const formRef = ref<FormInst | null>(null)
 const loading = ref(false)
-
-const formValue = reactive({
-  name: props.initialData?.name ?? '',
-  type: props.initialData?.type ?? '',
-  url: props.initialData?.url ?? ''
+const formValue = ref({
+  name: '',
+  type: '',
+  url: ''
 })
 
-const typeOptions = [
-  { label: '新闻', value: 'news' },
-  { label: '社群', value: 'community' },
-  { label: '金融', value: 'finance' },
-  { label: '科技', value: 'tech' },
-  { label: '技术', value: 'programming' },
-  { label: '博客', value: 'blog' }
-]
+const toastRef = ref<InstanceType<typeof Toast>>()
 
-const validateUrl = async (url: string) => {
-  if (!url) {
-    return false
+const typeOptions = {
+  news: '新闻',
+  community: '社群',
+  finance: '金融',
+  tech: '科技',
+  programming: '技术',
+  blog: '博客'
+}
+
+onMounted(() => {
+  if (props.initialData) {
+    formValue.value = {
+      name: props.initialData.name,
+      type: props.initialData.type,
+      url: props.initialData.url
+    }
   }
+})
+
+const validateRss = async (url: string) => {
+  if (!url) return false
 
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    message.error('请输入有效的URL')
+    toastRef.value?.toast('请输入有效的URL', 'error')
     return false
   }
 
   loading.value = true
-  try {
-    const proxyUrl = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
-    const response = await axios.get(proxyUrl)
-    
-    if (typeof response.data === 'string') {
-      const parser = new DOMParser()
-      const xml = parser.parseFromString(response.data, 'text/xml')
+  
+  // 定义多个代理服务，按顺序尝试
+  const proxyUrls = [
+    (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    (url: string) => `https://cors.eu.org/${url}`,
+    (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+  ]
+
+  for (const getProxyUrl of proxyUrls) {
+    try {
+      const proxyUrl = getProxyUrl(url)
+      const response = await axios.get(proxyUrl, {
+        timeout: 10000, // 10秒超时
+        headers: {
+          'Accept': 'application/xml, text/xml, application/rss+xml, application/atom+xml'
+        }
+      })
       
-      if (xml.getElementsByTagName('parsererror').length > 0) {
-        throw new Error('Invalid RSS format')
+      if (typeof response.data === 'string') {
+        const parser = new DOMParser()
+        const xml = parser.parseFromString(response.data, 'text/xml')
+        
+        // 检查是否为有效的 XML
+        if (xml.getElementsByTagName('parsererror').length > 0) {
+          console.warn('XML 解析错误，尝试下一个代理')
+          continue
+        }
+
+        // 检查 RSS 2.0
+        const rssItems = xml.getElementsByTagName('item')
+        if (rssItems.length > 0) {
+          toastRef.value?.toast('RSS 源验证成功', 'success')
+          return true
+        }
+
+        // 检查 Atom
+        const atomItems = xml.getElementsByTagName('entry')
+        if (atomItems.length > 0) {
+          toastRef.value?.toast('Atom 源验证成功', 'success')
+          return true
+        }
+
+        // 检查 RSS 1.0
+        const rdfItems = xml.getElementsByTagName('rdf:item')
+        if (rdfItems.length > 0) {
+          toastRef.value?.toast('RSS 1.0 源验证成功', 'success')
+          return true
+        }
+
+        // 如果没有找到任何文章，尝试下一个代理
+        console.warn('未找到文章，尝试下一个代理')
+        continue
       }
-      return true
+    } catch (error) {
+      console.error('代理访问失败:', error)
+      continue // 尝试下一个代理
     }
-    throw new Error('Invalid response format')
-  } catch (error) {
-    console.error('RSS验证失败:', error)
-    message.error('RSS验证失败，请检查URL是否正确')
-    return false
-  } finally {
-    loading.value = false
   }
+
+  toastRef.value?.toast('无法验证 RSS 源，请检查 URL 是否正确', 'error')
+  loading.value = false
+  return false
 }
 
-const rules = {
-  name: {
-    required: true,
-    message: '请输入名称',
-    trigger: 'blur'
-  },
-  type: {
-    required: true, 
-    message: '请选择类型',
-    trigger: 'change'
-  },
-  url: {
-    required: true,
-    message: '请输入URL',
-    trigger: 'blur'
+const handleSubmit = async (e: Event) => {
+  e.preventDefault()
+  
+  // 验证表单
+  if (!formValue.value.name.trim()) {
+    toastRef.value?.toast('请输入名称', 'error')
+    return
   }
-}
-
-const handleSubmit = async () => {
-  try {
-    await formRef.value?.validate()
-    
-    // 只在新增时验证 URL
-    if (!props.isEdit) {
-      if (!(await validateUrl(formValue.url))) {
-        return
-      }
-    }
-
-    emit('submit', {
-      ...formValue
-    })
-
-    if (!props.isEdit) {
-      formValue.name = ''
-      formValue.type = ''
-      formValue.url = ''
-      formRef.value?.restoreValidation()
-    }
-  } catch (error) {
-    // 表单验证失败
+  if (!formValue.value.type) {
+    toastRef.value?.toast('请选择类型', 'error')
+    return
   }
+  if (!formValue.value.url.trim()) {
+    toastRef.value?.toast('请输入URL', 'error')
+    return
+  }
+
+  if (!props.isEdit) {
+    if (!(await validateRss(formValue.value.url))) {
+      return
+    }
+  }
+
+  emit('submit', {
+    name: formValue.value.name.trim(),
+    type: formValue.value.type,
+    url: formValue.value.url.trim()
+  })
 }
 
 const handleCancel = () => {
   emit('cancel')
 }
-</script>
-
-<style scoped>
-.n-form {
-  padding: 8px;
-}
-
-.form-actions {
-  margin-top: 24px;
-}
-
-:deep(.n-form-item) {
-  margin-bottom: 18px;
-}
-
-:deep(.n-input),
-:deep(.n-select) {
-  width: 100%;
-}
-</style> 
+</script> 

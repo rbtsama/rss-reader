@@ -1,60 +1,80 @@
 <template>
-  <n-drawer-content>
-    <template #header>
-      <div class="flex items-center justify-between">
-        <span>{{ source.name }}</span>
-        <n-space>
-          <n-tag :type="getTagType(source.type)" :bordered="false">
-            {{ typeMap[source.type as keyof typeof typeMap] || source.type }}
-          </n-tag>
-          <n-button 
-            size="tiny"
-            :type="source.isSubscribed ? 'default' : 'primary'"
-            @click="handleSubscribe"
-          >
-            {{ source.isSubscribed ? '取消订阅' : '订阅' }}
-          </n-button>
-        </n-space>
+  <div class="h-full flex flex-col">
+    <!-- 头部 -->
+    <div class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <h2 class="text-2xl font-semibold tracking-tight">{{ source.name }}</h2>
+        <Badge :variant="getBadgeVariant(source.type)">
+          {{ typeMap[source.type as keyof typeof typeMap] || source.type }}
+        </Badge>
       </div>
-    </template>
-    
-    <div class="preview-content">
-      <n-spin :show="loading">
-        <template v-if="items.length">
-          <n-list>
-            <n-list-item v-for="item in items" :key="item.id">
-              <n-thing :title="item.title">
-                <template #description>
-                  <p class="text-gray-500 text-sm">{{ formatDate(item.pubDate) }}</p>
-                </template>
-                <div class="line-clamp-6" v-html="item.description"></div>
-              </n-thing>
-            </n-list-item>
-          </n-list>
-        </template>
-        <n-empty v-else description="暂无数据" />
-      </n-spin>
+      <Button
+        @click="handleSubscribe"
+        :variant="source.isSubscribed ? 'secondary' : 'default'"
+        size="sm"
+      >
+        <RssIcon class="h-4 w-4 mr-2" />
+        {{ source.isSubscribed ? '取消订阅' : '订阅' }}
+      </Button>
     </div>
-  </n-drawer-content>
+
+    <!-- 内容区 -->
+    <div class="flex-1 overflow-y-auto">
+      <div v-if="loading" class="space-y-4">
+        <div v-for="i in 3" :key="i" class="space-y-2">
+          <Skeleton class="h-5 w-2/3" />
+          <Skeleton class="h-20" />
+          <Skeleton class="h-4 w-24" />
+        </div>
+      </div>
+
+      <div v-else-if="items.length > 0" class="space-y-8">
+        <article v-for="item in items" :key="item.id" class="relative">
+          <Card>
+            <CardHeader>
+              <h3 class="text-lg font-semibold">
+                <a 
+                  :href="item.link" 
+                  target="_blank"
+                  class="hover:underline"
+                >
+                  {{ item.title }}
+                </a>
+              </h3>
+              <time class="text-sm text-muted-foreground">
+                {{ formatDate(item.pubDate) }}
+              </time>
+            </CardHeader>
+            <div class="p-6">
+              <div 
+                class="prose prose-sm max-w-none dark:prose-invert" 
+                v-html="item.description"
+              />
+            </div>
+          </Card>
+        </article>
+      </div>
+
+      <div v-else class="flex flex-col items-center justify-center py-12">
+        <div class="text-muted-foreground">
+          <FileXIcon class="h-12 w-12" />
+        </div>
+        <h3 class="mt-4 text-lg font-semibold">暂无内容</h3>
+        <p class="text-sm text-muted-foreground">
+          该 RSS 源暂时没有任何文章
+        </p>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
-import { 
-  NDrawerContent, 
-  NTag, 
-  NSpin, 
-  NList, 
-  NListItem, 
-  NThing, 
-  NButton, 
-  NEmpty,
-  NSpace,
-  NText,
-  useMessage
-} from 'naive-ui'
+import { RssIcon, FileXIcon } from 'lucide-vue-next'
 import type { RssSource, RssItem } from '../types/rss'
+import { Button, Badge, Card, CardHeader, Skeleton } from '@/components/ui'
+import Toast from './Toast.vue'
 
 const props = defineProps<{
   source: RssSource
@@ -62,9 +82,15 @@ const props = defineProps<{
 
 const loading = ref(true)
 const items = ref<RssItem[]>([])
+const toastRef = ref<InstanceType<typeof Toast>>()
 
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleString('zh-CN')
+const typeMap = {
+  news: '新闻',
+  community: '社群',
+  finance: '金融',
+  tech: '科技',
+  programming: '技术',
+  blog: '博客'
 }
 
 const emit = defineEmits<{
@@ -76,164 +102,94 @@ const handleSubscribe = () => {
   emit('subscribe', props.source)
 }
 
-const message = useMessage()
-
-const typeMap = {
-  news: '新闻',
-  community: '社群',
-  finance: '金融',
-  tech: '科技',
-  programming: '技术',
-  blog: '博客'
+const formatDate = (date: string) => {
+  return new Date(date).toLocaleString('zh-CN')
 }
 
-const getTagType = (type: string) => {
-  const typeColorMap: Record<string, 'default' | 'success' | 'warning' | 'error' | 'info'> = {
-    news: 'info',
-    community: 'success',
-    finance: 'warning',
-    tech: 'info',
-    programming: 'error',
-    blog: 'default'
+const getBadgeVariant = (type: string) => {
+  const variantMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+    news: 'default',
+    community: 'secondary',
+    finance: 'outline',
+    tech: 'default',
+    programming: 'destructive',
+    blog: 'secondary'
   }
-  return typeColorMap[type] || 'default'
+  return variantMap[type] || 'default'
 }
-
-const parseRssContent = (content: string): RssItem[] => {
-  const parser = new DOMParser()
-  const doc = parser.parseFromString(content, 'text/xml')
-  
-  // 处理 RSS 2.0
-  let items = Array.from(doc.querySelectorAll('item')).map(item => ({
-    id: item.querySelector('guid')?.textContent || 
-        item.querySelector('link')?.textContent || 
-        Date.now().toString(),
-    title: item.querySelector('title')?.textContent || '无标题',
-    link: item.querySelector('link')?.textContent || '',
-    description: item.querySelector('description')?.textContent || '',
-    pubDate: item.querySelector('pubDate')?.textContent || new Date().toISOString(),
-    sourceId: props.source.id
-  }))
-
-  // 如果没有找到 RSS 2.0 的 items，尝试解析 Atom
-  if (items.length === 0) {
-    items = Array.from(doc.querySelectorAll('entry')).map(entry => ({
-      id: entry.querySelector('id')?.textContent || 
-          entry.querySelector('link')?.getAttribute('href') || 
-          Date.now().toString(),
-      title: entry.querySelector('title')?.textContent || '无标题',
-      link: entry.querySelector('link')?.getAttribute('href') || '',
-      description: entry.querySelector('content')?.textContent || 
-                  entry.querySelector('summary')?.textContent || '',
-      pubDate: entry.querySelector('published')?.textContent || 
-               entry.querySelector('updated')?.textContent || 
-               new Date().toISOString(),
-      sourceId: props.source.id
-    }))
-  }
-
-  return items.map(item => ({
-    ...item,
-    description: cleanDescription(item.description || '')
-  }))
-}
-
-const cleanDescription = (description: string): string => {
-  // 移除可能的 CDATA 包装
-  description = description.replace(/<!\[CDATA\[(.*?)\]\]>/gs, '$1')
-  
-  // 如果内容是 HTML，保留基本格式但移除不安全的标签和属性
-  const div = document.createElement('div')
-  div.innerHTML = description
-  
-  // 移除脚本和样式标签
-  const scripts = div.getElementsByTagName('script')
-  const styles = div.getElementsByTagName('style')
-  while (scripts.length > 0) scripts[0].remove()
-  while (styles.length > 0) styles[0].remove()
-  
-  return div.innerHTML
-}
-
-const proxyUrls = [
-  (url: string) => `https://cors.eu.org/${url}`,  // 添加一个更快的代理
-  (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
-  (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
-]
 
 onMounted(async () => {
-  loading.value = true
-
-  const fetchWithProxy = async (proxyUrl: string, timeout: number = 5000) => {
-    try {
-      const response = await axios.get(proxyUrl, {
-        headers: {
-          'Accept': 'application/rss+xml, application/xml, text/xml, application/json',
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        },
-        timeout
-      })
-      
-      if (typeof response.data === 'string') {
-        const parsedItems = parseRssContent(response.data)
-        if (parsedItems.length > 0) {
-          return parsedItems
-        }
-      }
-      return null
-    } catch (error) {
-      console.error('代理获取失败:', error)
-      return null
-    }
-  }
-
-  // 首先尝试快速代理
   try {
-    const fastProxyUrl = `https://cors.eu.org/${props.source.url}`
-    const items = await fetchWithProxy(fastProxyUrl, 5000)
-    if (items) {
-      items.value = items.slice(0, 10)
-      loading.value = false
-      return
+    loading.value = true
+    
+    // 使用代理服务
+    const proxyUrls = [
+      (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+      (url: string) => `https://cors.eu.org/${url}`,
+      (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
+    ]
+
+    for (const getProxyUrl of proxyUrls) {
+      try {
+        const proxyUrl = getProxyUrl(props.source.url)
+        const response = await axios.get(proxyUrl, {
+          timeout: 10000,
+          headers: {
+            'Accept': 'application/xml, text/xml, application/rss+xml, application/atom+xml'
+          }
+        })
+        
+        if (typeof response.data === 'string') {
+          const parser = new DOMParser()
+          const xml = parser.parseFromString(response.data, 'text/xml')
+          
+          // 检查是否为有效的 XML
+          if (xml.getElementsByTagName('parsererror').length > 0) continue
+
+          // 解析 RSS 2.0
+          const rssItems = xml.getElementsByTagName('item')
+          if (rssItems.length > 0) {
+            items.value = Array.from(rssItems).map(item => ({
+              id: item.getElementsByTagName('guid')[0]?.textContent || '',
+              title: item.getElementsByTagName('title')[0]?.textContent || '',
+              description: item.getElementsByTagName('description')[0]?.textContent || '',
+              link: item.getElementsByTagName('link')[0]?.textContent || '',
+              pubDate: item.getElementsByTagName('pubDate')[0]?.textContent || ''
+            }))
+            break
+          }
+
+          // 解析 Atom
+          const atomItems = xml.getElementsByTagName('entry')
+          if (atomItems.length > 0) {
+            items.value = Array.from(atomItems).map(item => ({
+              id: item.getElementsByTagName('id')[0]?.textContent || '',
+              title: item.getElementsByTagName('title')[0]?.textContent || '',
+              description: item.getElementsByTagName('content')[0]?.textContent || '',
+              link: item.getElementsByTagName('link')[0]?.getAttribute('href') || '',
+              pubDate: item.getElementsByTagName('updated')[0]?.textContent || ''
+            }))
+            break
+          }
+        }
+      } catch (error) {
+        console.error('代理访问失败:', error)
+        continue
+      }
     }
   } catch (error) {
-    console.error('快速代理失败:', error)
+    console.error('获取 RSS 内容失败:', error)
+    toastRef.value?.toast('获取内容失败', 'error')
+  } finally {
+    loading.value = false
   }
-
-  // 如果快速代理失败，尝试其他代理
-  const fallbackProxies = [
-    `https://api.allorigins.win/raw?url=${encodeURIComponent(props.source.url)}`,
-    `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(props.source.url)}`
-  ]
-
-  for (const proxyUrl of fallbackProxies) {
-    try {
-      const fetchedItems = await fetchWithProxy(proxyUrl, 10000)
-      if (fetchedItems) {
-        items.value = fetchedItems.slice(0, 10)
-        break
-      }
-    } catch (error) {
-      console.error(`备用代理失败:`, error)
-      continue
-    }
-  }
-
-  if (!items.value.length) {
-    message.error('获取RSS内容失败')
-  }
-  loading.value = false
 })
 </script>
 
 <style scoped>
-.preview-content {
-  padding: 16px 0;
-}
-
-.line-clamp-6 {
+.line-clamp-2 {
   display: -webkit-box;
-  -webkit-line-clamp: 6;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
