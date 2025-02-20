@@ -21,8 +21,8 @@
             {{ source.name }}
           </TableCell>
           <TableCell>
-            <Badge :variant="getBadgeVariant(source.type)">
-              {{ typeMap[source.type as keyof typeof typeMap] || source.type }}
+            <Badge :class="typeMap[source.type as keyof typeof typeMap]?.color || 'bg-gray-100 text-gray-700'">
+              {{ typeMap[source.type as keyof typeof typeMap]?.label || source.type }}
             </Badge>
           </TableCell>
           <TableCell class="max-w-[200px] truncate text-[#4D4D4D]">
@@ -38,10 +38,28 @@
                 <PencilIcon class="h-4 w-4 mr-1" />
                 编辑
               </Button>
-              <Button variant="ghost" size="sm" @click="$emit('delete', source)">
-                <Trash2Icon class="h-4 w-4 mr-1" />
-                删除
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <Trash2Icon class="h-4 w-4 mr-1" />
+                    删除
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>确认删除</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      确认删除吗？
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>取消</AlertDialogCancel>
+                    <AlertDialogAction @click="$emit('delete', source)">
+                      确认
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
               <Button 
                 :variant="source.isSubscribed ? 'ghost' : 'default'"
                 size="sm" 
@@ -70,8 +88,19 @@ import {
   TableCell, 
   TableHead, 
   TableHeader, 
-  TableRow 
+  TableRow,
 } from '@/components/ui'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 
 defineProps<{
   sources: RssSource[]
@@ -84,24 +113,12 @@ defineEmits<{
   (e: 'subscribe', source: RssSource): void
 }>()
 
-const getBadgeVariant = (type: string) => {
-  const variantMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-    news: 'blue',      // 浅蓝色
-    community: 'green', // 浅绿色
-    finance: 'yellow',  // 浅黄色
-    tech: 'purple',    // 浅紫色
-    programming: 'red', // 浅红色
-    blog: 'gray'       // 浅灰色
-  }
-  return variantMap[type] || 'default'
-}
-
 const typeMap = {
-  news: '新闻',
-  community: '社群',
-  finance: '金融',
-  tech: '科技',
-  programming: '技术',
-  blog: '博客'
+  news: { label: '新闻', color: 'bg-blue-100 text-blue-700' },
+  community: { label: '社群', color: 'bg-green-100 text-green-700' },
+  finance: { label: '金融', color: 'bg-yellow-100 text-yellow-700' },
+  tech: { label: '科技', color: 'bg-purple-100 text-purple-700' },
+  programming: { label: '技术', color: 'bg-red-100 text-red-700' },
+  blog: { label: '博客', color: 'bg-slate-100 text-slate-700' }
 }
 </script> 

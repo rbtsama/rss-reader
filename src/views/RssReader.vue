@@ -5,25 +5,27 @@
     <div class="flex items-center justify-between bg-card rounded-lg p-4 shadow-sm border border-border/40">
       <div class="flex items-center space-x-4">
         <h2 class="text-lg font-semibold tracking-tight">我的订阅</h2>
-        <span class="text-sm text-muted-foreground">
+        <span class="text-sm text-[#4D4D4D]">
           {{ lastUpdateTime ? `上次更新: ${formatLastUpdateTime}` : '尚未更新' }}
         </span>
       </div>
       <div class="flex items-center space-x-4">
         <Button
           v-if="readArticles.size > 0"
-          variant="ghost"
+          variant="outline"
           size="sm"
+          class="border-red-200 hover:bg-red-50 text-red-700"
           @click="readArticles.clear(); localStorage.setItem('read_articles', '[]')"
         >
           <TrashIcon class="h-4 w-4 mr-2" />
           清除已读
         </Button>
         <Button
-          variant="blue"
+          variant="default"
           size="sm"
           @click="refreshAll"
           :disabled="isRefreshing"
+          class="bg-blue-600 hover:bg-blue-700 text-white"
         >
           <ArrowPathIcon v-if="isRefreshing" class="h-4 w-4 animate-spin mr-2" />
           <ArrowPathIcon v-else class="h-4 w-4 mr-2" />
@@ -39,8 +41,8 @@
           <CardHeader class="p-0 mb-4">
             <div class="flex items-center gap-2">
               <h3 class="text-base font-semibold text-[#333333] tracking-tight">{{ source.name }}</h3>
-              <Badge :variant="getBadgeVariant(source.type)" class="text-xs">
-                {{ typeMap[source.type as keyof typeof typeMap] || source.type }}
+              <Badge :class="typeMap[source.type as keyof typeof typeMap]?.color || 'bg-gray-100 text-gray-700'" class="text-xs">
+                {{ typeMap[source.type as keyof typeof typeMap]?.label || source.type }}
               </Badge>
             </div>
           </CardHeader>
@@ -48,7 +50,10 @@
             <div 
               v-for="item in sourceItems[source.id]" 
               :key="item.id"
-              class="text-sm text-[#4D4D4D] hover:text-primary cursor-pointer transition-colors duration-200 line-clamp-1"
+              class="text-sm cursor-pointer transition-colors duration-200 line-clamp-1 font-normal"
+              :class="[
+                readArticles.has(item.id) ? 'text-[#808080]' : 'text-[#4D4D4D] hover:text-primary',
+              ]"
               @click="handleReadArticle(item)"
             >
               {{ item.title }}
@@ -59,11 +64,11 @@
     </div>
 
     <div v-else class="text-center py-12">
-      <div class="mx-auto h-12 w-12 text-gray-400">
+      <div class="mx-auto h-12 w-12 text-[#4D4D4D]">
         <RssIcon class="h-12 w-12" aria-hidden="true" />
       </div>
-      <h3 class="mt-2 text-sm font-semibold text-gray-900">暂无订阅</h3>
-      <p class="mt-1 text-sm text-gray-500">请前往订阅管理添加 RSS 源</p>
+      <h3 class="mt-2 text-sm font-semibold text-[#333333]">暂无订阅</h3>
+      <p class="mt-1 text-sm text-[#4D4D4D]">请前往订阅管理添加 RSS 源</p>
     </div>
   </div>
 
@@ -95,26 +100,27 @@
           >
             <DialogPanel class="w-full max-w-3xl transform overflow-hidden rounded-2xl bg-white p-6 shadow-xl transition-all">
               <div class="flex items-center justify-between mb-6">
-                <h2 class="text-xl font-semibold text-gray-900">
+                <h2 class="text-xl font-semibold text-[#333333]">
                   {{ currentArticle?.title }}
                 </h2>
-                <button
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
                   @click="showArticle = false"
-                  class="text-gray-400 hover:text-gray-500"
                 >
-                  <XMarkIcon class="h-6 w-6" />
-                </button>
+                  <XMarkIcon class="h-5 w-5" />
+                </Button>
               </div>
               <div v-if="currentArticle" class="article-content overflow-y-auto max-h-[70vh]">
                 <div class="prose prose-sm max-w-none" v-html="currentArticle.description"></div>
                 <div class="mt-6 flex justify-between items-center">
-                  <time class="text-sm text-gray-500">
+                  <time class="text-sm text-[#4D4D4D]">
                     {{ new Date(currentArticle.pubDate).toLocaleString('zh-CN') }}
                   </time>
                   <a
                     :href="currentArticle.link"
                     target="_blank"
-                    class="inline-flex items-center text-sm font-medium text-indigo-600 hover:text-indigo-500"
+                    class="inline-flex items-center text-sm font-medium text-blue-600 hover:text-blue-500"
                   >
                     阅读原文
                     <ArrowTopRightOnSquareIcon class="ml-1 h-4 w-4" />
@@ -157,24 +163,12 @@ const toastRef = ref<InstanceType<typeof Toast>>()
 const readArticles = ref<Set<string>>(new Set(JSON.parse(localStorage.getItem('read_articles') || '[]')))
 
 const typeMap = {
-  news: '新闻',
-  community: '社群',
-  finance: '金融',
-  tech: '科技',
-  programming: '技术',
-  blog: '博客'
-}
-
-const getBadgeVariant = (type: string) => {
-  const variantMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-    news: 'default',
-    community: 'secondary',
-    finance: 'outline',
-    tech: 'default',
-    programming: 'destructive',
-    blog: 'secondary'
-  }
-  return variantMap[type] || 'default'
+  news: { label: '新闻', color: 'bg-blue-100 text-blue-700' },
+  community: { label: '社群', color: 'bg-green-100 text-green-700' },
+  finance: { label: '金融', color: 'bg-yellow-100 text-yellow-700' },
+  tech: { label: '科技', color: 'bg-purple-100 text-purple-700' },
+  programming: { label: '技术', color: 'bg-red-100 text-red-700' },
+  blog: { label: '博客', color: 'bg-slate-100 text-slate-700' }
 }
 
 const getTagClass = (type: string) => {
@@ -233,13 +227,16 @@ const fetchSourceItems = async (source: RssSource) => {
         const rssItems = xml.getElementsByTagName('item')
         if (rssItems.length > 0) {
           sourceItems.value[source.id] = Array.from(rssItems)
+            .sort((a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime())
             .slice(0, 10)  // 只取最新的10条
             .map(item => ({
               id: item.getElementsByTagName('guid')[0]?.textContent || Date.now().toString(),
               title: item.getElementsByTagName('title')[0]?.textContent || '无标题',
               description: cleanDescription(item.getElementsByTagName('description')[0]?.textContent || ''),
               link: item.getElementsByTagName('link')[0]?.textContent || '',
-              pubDate: item.getElementsByTagName('pubDate')[0]?.textContent || new Date().toISOString(),
+              pubDate: item.getElementsByTagName('pubDate')[0]?.textContent || 
+                       item.getElementsByTagName('date')[0]?.textContent ||
+                       new Date().toISOString(),
               sourceId: source.id
             }))
           break
@@ -248,17 +245,25 @@ const fetchSourceItems = async (source: RssSource) => {
         // 解析 Atom
         const atomItems = xml.getElementsByTagName('entry')
         if (atomItems.length > 0) {
-          sourceItems.value[source.id] = Array.from(atomItems).map(item => ({
-            id: item.getElementsByTagName('id')[0]?.textContent || Date.now().toString(),
-            title: item.getElementsByTagName('title')[0]?.textContent || '无标题',
-            description: cleanDescription(item.getElementsByTagName('content')[0]?.textContent || 
-                        item.getElementsByTagName('summary')[0]?.textContent || ''),
-            link: item.getElementsByTagName('link')[0]?.getAttribute('href') || '',
-            pubDate: item.getElementsByTagName('updated')[0]?.textContent || 
-                    item.getElementsByTagName('published')[0]?.textContent || 
-                    new Date().toISOString(),
-            sourceId: source.id
-          }))
+          sourceItems.value[source.id] = Array.from(atomItems)
+            .sort((a, b) => {
+              const dateA = new Date(a.getElementsByTagName('updated')[0]?.textContent || '').getTime()
+              const dateB = new Date(b.getElementsByTagName('updated')[0]?.textContent || '').getTime()
+              return dateB - dateA
+            })
+            .slice(0, 10)  // 只取最新的10条
+            .map(item => ({
+              id: item.getElementsByTagName('id')[0]?.textContent || Date.now().toString(),
+              title: item.getElementsByTagName('title')[0]?.textContent || '无标题',
+              description: cleanDescription(item.getElementsByTagName('content')[0]?.textContent || 
+                          item.getElementsByTagName('summary')[0]?.textContent || ''),
+              link: item.getElementsByTagName('link')[0]?.getAttribute('href') || '',
+              pubDate: item.getElementsByTagName('updated')[0]?.textContent || 
+                      item.getElementsByTagName('published')[0]?.textContent || 
+                      item.getElementsByTagName('date')[0]?.textContent ||
+                      new Date().toISOString(),
+              sourceId: source.id
+            }))
           break
         }
       }

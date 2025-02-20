@@ -1,5 +1,5 @@
 <template>
-  <div class="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <div class="container max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="flex flex-col space-y-8">
       <div class="flex items-center justify-between">
         <h1 class="scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl">

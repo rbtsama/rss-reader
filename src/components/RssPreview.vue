@@ -3,14 +3,15 @@
     <!-- 头部 -->
     <div class="flex items-center justify-between mb-6">
       <div class="flex items-center gap-3">
-        <h2 class="text-2xl font-semibold tracking-tight">{{ source.name }}</h2>
-        <Badge :variant="getBadgeVariant(source.type)">
+        <h2 class="text-2xl font-semibold tracking-tight text-[#333333]">{{ source.name }}</h2>
+        <Badge :variant="source.type">
           {{ typeMap[source.type as keyof typeof typeMap] || source.type }}
         </Badge>
       </div>
       <Button
         @click="handleSubscribe"
-        :variant="source.isSubscribed ? 'secondary' : 'default'"
+        :variant="source.isSubscribed ? 'ghost' : 'outline'"
+        :class="source.isSubscribed ? 'text-muted-foreground' : 'border-blue-200 hover:bg-blue-50 text-blue-700'"
         size="sm"
       >
         <RssIcon class="h-4 w-4 mr-2" />
@@ -20,49 +21,31 @@
 
     <!-- 内容区 -->
     <div class="flex-1 overflow-y-auto">
-      <div v-if="loading" class="space-y-4">
-        <div v-for="i in 3" :key="i" class="space-y-2">
-          <Skeleton class="h-5 w-2/3" />
-          <Skeleton class="h-20" />
-          <Skeleton class="h-4 w-24" />
+      <div class="space-y-6">
+        <div v-if="loading" class="flex justify-center py-8">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
         </div>
-      </div>
-
-      <div v-else-if="items.length > 0" class="space-y-8">
-        <article v-for="item in items" :key="item.id" class="relative">
-          <Card>
-            <CardHeader>
-              <h3 class="text-lg font-semibold">
-                <a 
-                  :href="item.link" 
-                  target="_blank"
-                  class="hover:underline"
-                >
+        <div v-else-if="items.length" class="space-y-6">
+          <article v-for="item in items" :key="item.id" class="relative">
+            <div class="group">
+              <h4 class="text-base font-semibold text-[#333333] group-hover:text-blue-600">
+                <a :href="item.link" target="_blank" class="focus:outline-none">
+                  <span class="absolute inset-0" aria-hidden="true" />
                   {{ item.title }}
                 </a>
-              </h3>
-              <time class="text-sm text-muted-foreground">
-                {{ formatDate(item.pubDate) }}
-              </time>
-            </CardHeader>
-            <div class="p-6">
-              <div 
-                class="prose prose-sm max-w-none dark:prose-invert" 
-                v-html="item.description"
-              />
+              </h4>
+              <p class="mt-2 text-sm text-[#4D4D4D] line-clamp-2" v-html="item.description"></p>
+              <div class="mt-2">
+                <time class="text-xs text-[#4D4D4D]">
+                  {{ new Date(item.pubDate).toLocaleString('zh-CN') }}
+                </time>
+              </div>
             </div>
-          </Card>
-        </article>
-      </div>
-
-      <div v-else class="flex flex-col items-center justify-center py-12">
-        <div class="text-muted-foreground">
-          <FileXIcon class="h-12 w-12" />
+          </article>
         </div>
-        <h3 class="mt-4 text-lg font-semibold">暂无内容</h3>
-        <p class="text-sm text-muted-foreground">
-          该 RSS 源暂时没有任何文章
-        </p>
+        <div v-else class="text-center py-8">
+          <p class="text-[#4D4D4D]">暂无内容</p>
+        </div>
       </div>
     </div>
   </div>

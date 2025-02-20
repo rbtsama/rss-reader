@@ -4,7 +4,11 @@
     <CardHeader>
       <div class="flex items-center justify-between">
         <h3 class="text-2xl font-semibold leading-none tracking-tight">订阅列表</h3>
-        <Button @click="handleAdd">
+        <Button 
+          variant="default"
+          class="bg-blue-600 hover:bg-blue-700 text-white"
+          @click="handleAdd"
+        >
           <PlusIcon class="mr-2 h-4 w-4" />
           新增订阅
         </Button>
@@ -39,7 +43,7 @@
                 <div class="flex items-center justify-between">
                   <h2 class="text-lg font-semibold">预览</h2>
                   <Button variant="ghost" size="icon" @click="showPreview = false">
-                    <XIcon class="h-4 w-4" />
+                    <XMarkIcon class="h-4 w-4" />
                   </Button>
                 </div>
               </CardHeader>
@@ -106,7 +110,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { Dialog, DialogPanel, DialogTitle, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import { PlusIcon, XIcon } from 'lucide-vue-next'
+import { PlusIcon, XMarkIcon } from '@heroicons/vue/24/outline'
 import type { RssSource } from '../types/rss'
 import { storage } from '../services/storage'
 import { Button, Card, CardHeader } from '@/components/ui'
@@ -114,6 +118,17 @@ import RssForm from '../components/RssForm.vue'
 import RssList from '../components/RssList.vue'
 import RssPreview from '../components/RssPreview.vue'
 import Toast from '../components/Toast.vue'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 
 const rssSources = ref<RssSource[]>([])
 const showPreview = ref(false)
@@ -177,14 +192,6 @@ const handleCancel = () => {
 }
 
 const handleDelete = async (source: RssSource) => {
-  // 第一次确认
-  const firstConfirm = window.confirm(`确定要删除 "${source.name}" 吗？`)
-  if (!firstConfirm) return
-
-  // 第二次确认
-  const secondConfirm = window.confirm(`再次确认是否删除 "${source.name}"？此操作不可恢复。`)
-  if (!secondConfirm) return
-
   const index = rssSources.value.findIndex(s => s.id === source.id)
   if (index > -1) {
     rssSources.value.splice(index, 1)

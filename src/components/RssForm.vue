@@ -1,59 +1,98 @@
 <template>
-  <form @submit.prevent="handleSubmit" class="space-y-6">
+  <form @submit.prevent="handleSubmit" class="space-y-4">
     <Toast ref="toastRef" />
     
     <!-- 名称输入 -->
     <div class="space-y-2">
-      <Label for="name">名称</Label>
-      <Input
-        id="name"
-        v-model="formValue.name"
-        type="text"
-        required
-      />
+      <Label for="name" class="text-[#4D4D4D]">名称</Label>
+      <div class="relative">
+        <Input
+          id="name"
+          v-model="formValue.name"
+          placeholder="请输入订阅源名称"
+          class="text-[#4D4D4D]"
+          required
+          :disabled="loading"
+        />
+        <span v-if="showValidation && !formValue.name.trim()" class="absolute -bottom-5 left-0 text-xs text-red-500">
+          请输入名称
+        </span>
+      </div>
     </div>
 
     <!-- 类型选择 -->
     <div class="space-y-2">
-      <Label for="type">类型</Label>
-      <Select
-        id="type"
-        v-model="formValue.type"
-        required
-      >
-        <option value="">请选择类型</option>
-        <option v-for="(label, value) in typeOptions" :key="value" :value="value">
-          {{ label }}
-        </option>
-      </Select>
+      <Label for="type" class="text-[#4D4D4D]">类型</Label>
+      <div class="relative">
+        <Select 
+          v-model="formValue.type"
+          required
+          :disabled="loading"
+        >
+          <SelectTrigger class="w-full">
+            <SelectValue placeholder="请选择订阅源类型" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectGroup>
+              <SelectItem
+                v-for="(label, value) in typeOptions"
+                :key="value"
+                :value="value"
+                :class="label.color"
+              >
+                {{ label.label }}
+              </SelectItem>
+            </SelectGroup>
+          </SelectContent>
+        </Select>
+        <span v-if="showValidation && !formValue.type" class="absolute -bottom-5 left-0 text-xs text-red-500">
+          请选择类型
+        </span>
+      </div>
     </div>
 
     <!-- URL 输入 -->
     <div class="space-y-2">
-      <Label for="url">URL</Label>
-      <Input
-        id="url"
-        v-model="formValue.url"
-        type="url"
-        required
-        :disabled="loading"
-      />
+      <Label for="url" class="text-[#4D4D4D]">URL</Label>
+      <div class="relative">
+        <Input
+          id="url"
+          v-model="formValue.url"
+          placeholder="请输入订阅源地址"
+          class="text-[#4D4D4D]"
+          required
+          :disabled="loading"
+          type="url"
+        />
+        <span v-if="showValidation && !formValue.url.trim()" class="absolute -bottom-5 left-0 text-xs text-red-500">
+          请输入有效的URL
+        </span>
+      </div>
     </div>
 
     <!-- 按钮组 -->
-    <div class="flex justify-end space-x-4">
+    <div class="flex justify-end gap-4 mt-6">
       <Button
         type="button"
         variant="ghost"
+        :disabled="loading"
         @click="handleCancel"
       >
         取消
       </Button>
       <Button
         type="submit"
+        variant="outline"
         :disabled="loading"
+        class="border-blue-200 hover:bg-blue-50 text-blue-700"
       >
-        {{ loading ? '验证中...' : '确定' }}
+        <template v-if="loading">
+          <div class="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
+          验证中...
+        </template>
+        <template v-else>
+          {{ isEdit ? '保存' : '添加' }}
+        </template>
       </Button>
     </div>
   </form>
@@ -63,7 +102,15 @@
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import type { RssSource } from '../types/rss'
-import { Button, Input, Label, Select } from '@/components/ui'
+import { Button, Input, Label } from '@/components/ui'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import Toast from './Toast.vue'
 
 const props = defineProps<{
@@ -77,6 +124,7 @@ const emit = defineEmits<{
 }>()
 
 const loading = ref(false)
+const showValidation = ref(false)
 const formValue = ref({
   name: '',
   type: '',
@@ -86,12 +134,12 @@ const formValue = ref({
 const toastRef = ref<InstanceType<typeof Toast>>()
 
 const typeOptions = {
-  news: '新闻',
-  community: '社群',
-  finance: '金融',
-  tech: '科技',
-  programming: '技术',
-  blog: '博客'
+  news: { label: '新闻', color: 'bg-blue-100 text-blue-700' },
+  community: { label: '社群', color: 'bg-green-100 text-green-700' },
+  finance: { label: '金融', color: 'bg-yellow-100 text-yellow-700' },
+  tech: { label: '科技', color: 'bg-purple-100 text-purple-700' },
+  programming: { label: '技术', color: 'bg-red-100 text-red-700' },
+  blog: { label: '博客', color: 'bg-slate-100 text-slate-700' }
 }
 
 onMounted(() => {
@@ -179,6 +227,7 @@ const validateRss = async (url: string) => {
 
 const handleSubmit = async (e: Event) => {
   e.preventDefault()
+  showValidation.value = true
   
   // 验证表单
   if (!formValue.value.name.trim()) {
