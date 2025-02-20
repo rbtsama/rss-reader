@@ -17,7 +17,7 @@
           :key="source.id"
           class="hover:bg-muted/30 transition-colors duration-200"
         >
-          <TableCell class="font-medium">
+          <TableCell class="font-medium text-[#4D4D4D]">
             {{ source.name }}
           </TableCell>
           <TableCell>
@@ -25,11 +25,11 @@
               {{ typeMap[source.type as keyof typeof typeMap] || source.type }}
             </Badge>
           </TableCell>
-          <TableCell class="max-w-[200px] truncate">
+          <TableCell class="max-w-[200px] truncate text-[#4D4D4D]">
             {{ source.url }}
           </TableCell>
           <TableCell>
-            <div class="flex justify-end gap-2 items-center">
+            <div class="flex justify-end gap-2 items-center text-[#4D4D4D]">
               <Button variant="ghost" size="sm" @click="$emit('preview', source)">
                 <EyeIcon class="h-4 w-4 mr-1" />
                 预览
@@ -86,12 +86,12 @@ defineEmits<{
 
 const getBadgeVariant = (type: string) => {
   const variantMap: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-    news: 'default',
-    community: 'secondary',
-    finance: 'outline',
-    tech: 'default',
-    programming: 'destructive',
-    blog: 'secondary'
+    news: 'blue',      // 浅蓝色
+    community: 'green', // 浅绿色
+    finance: 'yellow',  // 浅黄色
+    tech: 'purple',    // 浅紫色
+    programming: 'red', // 浅红色
+    blog: 'gray'       // 浅灰色
   }
   return variantMap[type] || 'default'
 }

@@ -20,15 +20,7 @@
           清除已读
         </Button>
         <Button
-          variant="outline"
-          size="sm"
-          @click="sortOrder = sortOrder === 'desc' ? 'asc' : 'desc'"
-        >
-          <ArrowsUpDownIcon class="h-4 w-4 mr-2" />
-          {{ sortOrder === 'desc' ? '最新优先' : '最早优先' }}
-        </Button>
-        <Button
-          variant="secondary"
+          variant="blue"
           size="sm"
           @click="refreshAll"
           :disabled="isRefreshing"
@@ -56,7 +48,7 @@
             <div 
               v-for="item in sourceItems[source.id]" 
               :key="item.id"
-              class="text-sm hover:text-primary cursor-pointer transition-colors duration-200 line-clamp-1"
+              class="text-sm text-[#4D4D4D] hover:text-primary cursor-pointer transition-colors duration-200 line-clamp-1"
               @click="handleReadArticle(item)"
             >
               {{ item.title }}
@@ -145,7 +137,6 @@ import {
   RssIcon, 
   ArrowTopRightOnSquareIcon,
   XMarkIcon,
-  ArrowsUpDownIcon,
   TrashIcon
 } from '@heroicons/vue/24/outline'
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
@@ -163,21 +154,7 @@ const currentArticle = ref<RssItem | null>(null)
 const lastUpdateTime = ref<number>(Number(localStorage.getItem('last_update_time')) || 0)
 const isRefreshing = ref(false)
 const toastRef = ref<InstanceType<typeof Toast>>()
-const sortOrder = ref<'desc' | 'asc'>('desc')
 const readArticles = ref<Set<string>>(new Set(JSON.parse(localStorage.getItem('read_articles') || '[]')))
-
-const sortedSourceItems = computed(() => {
-  return Object.fromEntries(
-    Object.entries(sourceItems.value).map(([sourceId, items]) => [
-      sourceId,
-      [...items].sort((a, b) => {
-        const dateA = new Date(a.pubDate).getTime()
-        const dateB = new Date(b.pubDate).getTime()
-        return sortOrder.value === 'desc' ? dateB - dateA : dateA - dateB
-      })
-    ])
-  )
-})
 
 const typeMap = {
   news: '新闻',
@@ -255,14 +232,16 @@ const fetchSourceItems = async (source: RssSource) => {
         // 解析 RSS 2.0
         const rssItems = xml.getElementsByTagName('item')
         if (rssItems.length > 0) {
-          sourceItems.value[source.id] = Array.from(rssItems).map(item => ({
-            id: item.getElementsByTagName('guid')[0]?.textContent || Date.now().toString(),
-            title: item.getElementsByTagName('title')[0]?.textContent || '无标题',
-            description: cleanDescription(item.getElementsByTagName('description')[0]?.textContent || ''),
-            link: item.getElementsByTagName('link')[0]?.textContent || '',
-            pubDate: item.getElementsByTagName('pubDate')[0]?.textContent || new Date().toISOString(),
-            sourceId: source.id
-          }))
+          sourceItems.value[source.id] = Array.from(rssItems)
+            .slice(0, 10)  // 只取最新的10条
+            .map(item => ({
+              id: item.getElementsByTagName('guid')[0]?.textContent || Date.now().toString(),
+              title: item.getElementsByTagName('title')[0]?.textContent || '无标题',
+              description: cleanDescription(item.getElementsByTagName('description')[0]?.textContent || ''),
+              link: item.getElementsByTagName('link')[0]?.textContent || '',
+              pubDate: item.getElementsByTagName('pubDate')[0]?.textContent || new Date().toISOString(),
+              sourceId: source.id
+            }))
           break
         }
 

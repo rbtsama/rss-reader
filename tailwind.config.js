@@ -69,6 +69,14 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
       },
     },
+    variants: {
+      button: {
+        blue: {
+          background: "bg-blue-100 hover:bg-blue-200",
+          foreground: "text-blue-900"
+        }
+      }
+    }
   },
   plugins: [
     async () => {

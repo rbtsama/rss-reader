@@ -176,7 +176,15 @@ const handleCancel = () => {
   editingSource.value = null
 }
 
-const handleDelete = (source: RssSource) => {
+const handleDelete = async (source: RssSource) => {
+  // 第一次确认
+  const firstConfirm = window.confirm(`确定要删除 "${source.name}" 吗？`)
+  if (!firstConfirm) return
+
+  // 第二次确认
+  const secondConfirm = window.confirm(`再次确认是否删除 "${source.name}"？此操作不可恢复。`)
+  if (!secondConfirm) return
+
   const index = rssSources.value.findIndex(s => s.id === source.id)
   if (index > -1) {
     rssSources.value.splice(index, 1)
